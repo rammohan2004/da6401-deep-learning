@@ -166,3 +166,5 @@ class NeuralNetwork:
         accuracy = np.mean(y_true_classes==y_pred_classes)
         
         return loss, accuracy
+    
+    
