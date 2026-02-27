@@ -8,8 +8,8 @@ import numpy as np
 import os
 import json
 from sklearn.metrics import accuracy_score, precision_score, recall_score, f1_score
-from src.utils.data_loader import load_and_preprocess_data
-from src.ann.neural_network import NeuralNetwork
+from utils.data_loader import load_and_preprocess_data
+from ann.neural_network import NeuralNetwork
 
 def parse_arguments():
     """
