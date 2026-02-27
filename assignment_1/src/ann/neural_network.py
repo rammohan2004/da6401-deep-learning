@@ -7,6 +7,7 @@ from .neural_layer import NeuralLayer
 from .activations import ReLU, Sigmoid, Tanh, Softmax
 from .objective_functions import CrossEntropy, MeanSquaredError
 from .optimizers import SGD, Momentum, NAG, RMSprop, Adam, Nadam
+import wandb
 
 
 class NeuralNetwork:
@@ -114,37 +115,65 @@ class NeuralNetwork:
         """
         self.optimizer.update(self.layers)
     
-    def train(self, X_train, y_train, epochs, batch_size):
+    def train(self, X_train, y_train,X_val, y_val, epochs, batch_size):
         """
         Train the network for specified epochs.
         """
         num_samples = X_train.shape[0]
-        history = {'loss': [], 'accuracy': []}
+        #storing training loss, accuracy and validation loss, accuracy
+        history = {'loss':[], 'accuracy':[], 'val_loss':[], 'val_accuracy':[]}
         
         for epoch in range(epochs):
 
-            #Shuffling dataset
+            #Shuffling the dataset
             indices = np.random.permutation(num_samples)
-            X_shuffled =X_train[indices]
+            X_shuffled = X_train[indices]
             y_shuffled = y_train[indices]
             
             for i in range(0, num_samples, batch_size):
 
-                #Slicing to get a batch
+                #SLicing the dataset to get a particular batch
                 X_batch = X_shuffled[i:i+batch_size]
-                y_batch =y_shuffled[i:i+batch_size]
+                y_batch = y_shuffled[i:i+batch_size]
                 
-                #Performing forward pass
+                #Forward pass
                 y_pred = self.forward(X_batch)
-                #performing backward pass
+                #Backward pass
                 self.backward(y_batch, y_pred)
-                #updating weights
+                #Updating weights
                 self.update_weights()
             
-            #calculating loss for each epoch
+            #Calculating epoch loss and accuracy
             epoch_loss, epoch_acc = self.evaluate(X_train, y_train)
+            
+            #Calculating validation loss, and logits
+            val_logits =self.forward(X_val)
+            val_loss =self.loss_func.forward(y_val, val_logits)
+            
+            #Calculating validation accuracy
+            y_val_true_classes =np.argmax(y_val, axis=1)
+            y_val_pred_classes = np.argmax(val_logits, axis=1)
+            val_acc= np.mean(y_val_true_classes==y_val_pred_classes)
+            
+            # Save to history dictionary
             history['loss'].append(epoch_loss)
             history['accuracy'].append(epoch_acc)
+            history['val_loss'].append(val_loss)
+            history['val_accuracy'].append(val_acc)
+            
+            #wandb log
+            if wandb.run is not None:
+                wandb.log({
+                    'epoch': epoch + 1,
+                    'train_loss': epoch_loss,
+                    'train_accuracy': epoch_acc,
+                    'val_loss': val_loss,
+                    'val_accuracy': val_acc,
+                    'val_logits': wandb.Histogram(val_logits) 
+                })
+            
+            
+            print(f"Epoch {epoch+1}/{epochs} | Train Loss: {epoch_loss:.4f}, Acc: {epoch_acc:.4f} | Val Loss: {val_loss:.4f}, Val Acc: {val_acc:.4f}")
             
         return history
     
@@ -166,5 +195,4 @@ class NeuralNetwork:
         accuracy = np.mean(y_true_classes==y_pred_classes)
         
         return loss, accuracy
-    
     

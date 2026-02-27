@@ -80,7 +80,7 @@ def main():
     model = NeuralNetwork(args) 
     #Training model
     print("Starting training...")
-    history = model.train(X_train, y_train, args.epochs, args.batch_size)
+    history = model.train(X_train, y_train,X_val, y_val, args.epochs, args.batch_size)
     
     #Evaluation of validation set
     val_loss, val_acc = model.evaluate(X_val, y_val)
