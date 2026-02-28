@@ -47,7 +47,7 @@ def parse_arguments():
                         choices=['sigmoid', 'tanh', 'relu'])
     parser.add_argument('-w_i', '--weight_init', type=str, required=True,
                         choices=['random', 'xavier'])
-    parser.add_argument('--wandb_project', type=str, default=None)
+    parser.add_argument('-w_p','--wandb_project', type=str, default=None)
     parser.add_argument('--model_save_path', type=str, default='models/')
     
     args = parser.parse_args()
@@ -72,19 +72,17 @@ def main():
     
     #Loading data 
     print("Loading and preprocessing data...")
-    X_train, X_val, X_test, y_train, y_val, y_test = load_and_preprocess_data(args.dataset)
-    print(f"Data loaded: train {X_train.shape}, val {X_val.shape}, test {X_test.shape}")
+    X_train, X_test, y_train, y_test = load_and_preprocess_data(args.dataset)
+    print(f"Data loaded: train {X_train.shape}, test {X_test.shape}")
     
     #Initializing the Model
     print("Initializing model...")
     model = NeuralNetwork(args) 
     #Training model
     print("Starting training...")
-    history = model.train(X_train, y_train,X_val, y_val, args.epochs, args.batch_size)
+    history = model.train(X_train, y_train, args.epochs, args.batch_size)
     
-    #Evaluation of validation set
-    val_loss, val_acc = model.evaluate(X_val, y_val)
-    print(f"Final Validation Accuracy: {val_acc:.4f}, Loss: {val_loss:.4f}")
+
     
     #Saving the model
     os.makedirs(args.model_save_path, exist_ok=True)
@@ -95,13 +93,12 @@ def main():
         json.dump(vars(args), f, indent=4)
     print(f"Configuration saved to {config_path}")
     
+
     #Saving model weights and biases as numpy .npy file
-    weights_dict = {}
-    for i, layer in enumerate(model.layers):
-        weights_dict[f'W_{i}'] = layer.W
-        weights_dict[f'b_{i}'] = layer.b
-    model_path = os.path.join(args.model_save_path, 'model.npy')
-    np.save(model_path, weights_dict)
+
+    best_weights = model.best_weights
+    model_path = os.path.join(args.model_save_path, 'best_model.npy')
+    np.save(model_path, best_weights)
     print(f"Model weights saved to {model_path}")
     
     #Finishing wandb
@@ -109,6 +106,14 @@ def main():
         wandb.finish()
     
     print("Training complete!")
+
+    ''' weights_dict = {}
+    for i, layer in enumerate(model.layers):
+        weights_dict[f'W_{i}'] = layer.W
+        weights_dict[f'b_{i}'] = layer.b
+    model_path = os.path.join(args.model_save_path, 'model.npy')
+    np.save(model_path, weights_dict)
+    print(f"Model weights saved to {model_path}")'''
 
 
 if __name__ == '__main__':

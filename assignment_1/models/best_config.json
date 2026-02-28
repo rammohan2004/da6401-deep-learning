@@ -1,6 +1,6 @@
 {
     "dataset": "mnist",
-    "epochs": 2,
+    "epochs": 6,
     "batch_size": 64,
     "loss": "cross_entropy",
     "optimizer": "rmsprop",

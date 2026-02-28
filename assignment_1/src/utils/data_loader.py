@@ -7,7 +7,7 @@ from keras.datasets import mnist, fashion_mnist
 from sklearn.model_selection import train_test_split
 
 
-def load_and_preprocess_data(dataset_name='mnist', val_split=0.1):
+def load_and_preprocess_data(dataset_name='mnist'):
     """
     Loads, flattens, normalizes, and one-hot encodes the dataset.
     
@@ -16,9 +16,9 @@ def load_and_preprocess_data(dataset_name='mnist', val_split=0.1):
         val_split: Fraction of training data to use for validation
         
     Returns:
-        X_train, X_val, X_test, y_train, y_val, y_test
+        X_train_norm,X_test_norm, y_train_encoded, y_test_encoded
     """
-    # 1. Load raw data
+    #Load raw data
     if dataset_name == 'mnist':
         (X_train_raw, y_train_raw), (X_test_raw, y_test_raw) = mnist.load_data()
     elif dataset_name == 'fashion_mnist':
@@ -36,7 +36,6 @@ def load_and_preprocess_data(dataset_name='mnist', val_split=0.1):
     y_train_encoded = np.eye(10)[y_train_raw]
     y_test_encoded = np.eye(10)[y_test_raw]
     
-    #splitting training data into training and validaion
-    X_train, X_val, y_train, y_val =train_test_split(X_train_norm, y_train_encoded, test_size=val_split)
+   
     
-    return X_train, X_val, X_test_norm, y_train, y_val, y_test_encoded
+    return X_train_norm,X_test_norm, y_train_encoded, y_test_encoded

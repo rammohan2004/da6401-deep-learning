@@ -8,7 +8,7 @@ from .activations import ReLU, Sigmoid, Tanh, Softmax
 from .objective_functions import CrossEntropy, MeanSquaredError
 from .optimizers import SGD, Momentum, NAG, RMSprop
 import wandb
-
+from sklearn.metrics import f1_score
 
 class NeuralNetwork:
     """
@@ -147,26 +147,41 @@ class NeuralNetwork:
         """
         self.optimizer.update(self.layers)
     
-    def train(self, X_train, y_train,X_val, y_val, epochs=1, batch_size=32):
+    def train(self, X_train, y_train, epochs=1, batch_size=32):
         """
         Train the network for specified epochs.
         """
         num_samples = X_train.shape[0]
+        val_size = int(0.1 * num_samples) 
+        indices = np.random.permutation(num_samples)
+        X_shuffled = X_train[indices]
+        y_shuffled = y_train[indices]
+        
+        X_val = X_shuffled[:val_size]
+        y_val = y_shuffled[:val_size]
+        
+        X_train_split = X_shuffled[val_size:]
+        y_train_split = y_shuffled[val_size:]
+        
+        train_samples = X_train_split.shape[0] 
         #storing training loss, accuracy and validation loss, accuracy
         history = {'loss':[], 'accuracy':[], 'val_loss':[], 'val_accuracy':[]}
+
+        best_val_f1=-1
+        self.best_weights=None
         
         for epoch in range(epochs):
 
             #Shuffling the dataset
-            indices = np.random.permutation(num_samples)
-            X_shuffled = X_train[indices]
-            y_shuffled = y_train[indices]
+            indices = np.random.permutation(train_samples)
+            X_epoch = X_train_split[indices]
+            y_epoch = y_train_split[indices]
             
             for i in range(0, num_samples, batch_size):
 
                 #SLicing the dataset to get a particular batch
-                X_batch = X_shuffled[i:i+batch_size]
-                y_batch = y_shuffled[i:i+batch_size]
+                X_batch = X_epoch[i:i+batch_size]
+                y_batch = y_epoch[i:i+batch_size]
                 
                 #Forward pass
                 y_pred = self.forward(X_batch)
@@ -179,7 +194,7 @@ class NeuralNetwork:
                 self.update_weights()
             
             #Calculating epoch loss and accuracy
-            epoch_loss, epoch_acc = self.evaluate(X_train, y_train)
+            epoch_loss, epoch_acc, _ = self.evaluate(X_train_split, y_train_split)
             
             #Calculating validation loss, and logits
             val_logits =self.forward(X_val)
@@ -190,7 +205,11 @@ class NeuralNetwork:
             y_val_true_classes =np.argmax(y_val, axis=1)
             y_val_pred_classes = np.argmax(val_logits, axis=1)
             val_acc= np.mean(y_val_true_classes==y_val_pred_classes)
-            
+            val_f1 = f1_score(y_val_true_classes, y_val_pred_classes, average='macro', zero_division=0)
+
+            if val_f1 > best_val_f1:
+                best_val_f1 = val_f1
+                self.best_weights = self.get_weights()
             # Save to history dictionary
             history['loss'].append(epoch_loss)
             history['accuracy'].append(epoch_acc)
@@ -230,6 +249,21 @@ class NeuralNetwork:
         
         #calculating accuaracy
         accuracy = np.mean(y_true_classes==y_pred_classes)
+        f1 = f1_score(y_true_classes, y_pred_classes, average='macro', zero_division=0)
         
-        return loss, accuracy
-    
+        return loss, accuracy, f1
+    def get_weights(self):
+        d = {}
+        for i, layer in enumerate(self.layers):
+            d[f"W{i}"] = layer.W.copy()
+            d[f"b{i}"] = layer.b.copy()
+        return d
+
+    def set_weights(self, weight_dict):
+        for i, layer in enumerate(self.layers):
+            w_key = f"W{i}"
+            b_key = f"b{i}"
+            if w_key in weight_dict:
+                layer.W = weight_dict[w_key].copy()
+            if b_key in weight_dict:
+                layer.b = weight_dict[b_key].copy()
