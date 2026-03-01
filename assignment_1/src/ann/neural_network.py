@@ -169,32 +169,45 @@ class NeuralNetwork:
 
         best_val_f1=-1
         self.best_weights=None
-        
-        for epoch in range(epochs):
 
-            #Shuffling the dataset
+        for epoch in range(epochs):
+            # Shuffling the dataset
             indices = np.random.permutation(train_samples)
             X_epoch = X_train_split[indices]
             y_epoch = y_train_split[indices]
             
-            for i in range(0, num_samples, batch_size):
-
-                #SLicing the dataset to get a particular batch
+            # Tracking metrics for the epoch
+            epoch_loss_sum = 0
+            correct_predictions = 0
+            
+            for i in range(0, train_samples, batch_size):
+                # Slicing the dataset to get a particular batch
                 X_batch = X_epoch[i:i+batch_size]
                 y_batch = y_epoch[i:i+batch_size]
                 
-                #Forward pass
-                y_pred = self.forward(X_batch)
-                #applying softmax activation
-                y_pred = self.activations[-1].forward(y_pred)
+                # Forward pass
+                logits = self.forward(X_batch)
+                
+                # Applying softmax activation
+                y_pred = self.activations[-1].forward(logits)
 
-                #Backward pass
+                # Backward pass
                 self.backward(y_batch, y_pred)
-                #Updating weights
+                
+                # Updating weights
                 self.update_weights()
+                
+                # Accumulate loss and accuracy for this batch
+                batch_loss = self.loss_func.forward(y_batch, y_pred)
+                epoch_loss_sum += batch_loss * X_batch.shape[0] # Weighted by batch size
+                
+                y_true_classes = np.argmax(y_batch, axis=1)
+                y_pred_classes = np.argmax(y_pred, axis=1)
+                correct_predictions += np.sum(y_true_classes == y_pred_classes)
             
-            #Calculating epoch loss and accuracy
-            epoch_loss, epoch_acc, _ = self.evaluate(X_train_split, y_train_split)
+            # Calculate final epoch metrics without running a massive forward pass!
+            epoch_loss = epoch_loss_sum / train_samples
+            epoch_acc = correct_predictions / train_samples
             
             #Calculating validation loss, and logits
             val_logits =self.forward(X_val)
