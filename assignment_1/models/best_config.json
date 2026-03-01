@@ -1,21 +1,17 @@
 {
     "dataset": "mnist",
-    "epochs": 6,
-    "batch_size": 64,
+    "epochs": 2,
+    "batch_size": 32,
     "loss": "cross_entropy",
-    "optimizer": "rmsprop",
-    "learning_rate": 0.001,
+    "optimizer": "sgd",
+    "learning_rate": 0.01,
     "weight_decay": 0.0,
-    "num_layers": 5,
+    "num_layers": 1,
     "hidden_size": [
-        128,
-        128,
-        128,
-        128,
-        128
+        64
     ],
     "activation": "relu",
-    "weight_init": "xavier",
+    "weight_init": "random",
     "wandb_project": null,
     "model_save_path": "models/"
 }

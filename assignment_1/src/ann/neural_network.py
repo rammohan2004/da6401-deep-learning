@@ -134,8 +134,8 @@ class NeuralNetwork:
             self.grad_W[i] = gw
             self.grad_b[i] = gb
 
-        print("Shape of grad_Ws:", self.grad_W.shape, self.grad_W[0].shape)
-        print("Shape of grad_bs:", self.grad_b.shape, self.grad_b[0].shape)
+        #print("Shape of grad_Ws:", self.grad_W.shape, self.grad_W[0].shape)
+        #print("Shape of grad_bs:", self.grad_b.shape, self.grad_b[0].shape)
         return self.grad_W, self.grad_b
 
         
@@ -211,8 +211,8 @@ class NeuralNetwork:
             
             #Calculating validation loss, and logits
             val_logits =self.forward(X_val)
-            val_logits=self.activations[-1].forward(val_logits)
-            val_loss =self.loss_func.forward(y_val, val_logits)
+            val_prob=self.activations[-1].forward(val_logits)
+            val_loss =self.loss_func.forward(y_val, val_prob)
             
             #Calculating validation accuracy
             y_val_true_classes =np.argmax(y_val, axis=1)
